@@ -12,42 +12,42 @@ async function run() {
     const result = await sql.query(`SELECT Title AS Title, STRING_AGG(SeriesNumber,',') AS Series FROM Issues GROUP BY Title`);
     // console.dir(result)
 
-    for (const row in result.recordset) {
-        const html = await rp(`${url}${row.Title}`)
-        console.log(parseHtml(html));
+    for (const row of result.recordset) {
+        const comicURL = (`${url}${encodeURI(row.Title)}`);
+        console.log(comicURL);
+        const html = await rp(comicURL)
+        console.log(parseHtml(html, comicURL));
     }
-    // const html = await rp(url);
-    //
-    // for (let i = 2; i <= pageCount; i++) {
-    //     console.log(i);
-    //     const newHtml = await rp(`${url}&page=${i}`);
-    //     parseHtml(newHtml)
-    // }
 }
 
-async function parseHtml(html) {
-    //success!
-    const comicImages = [];
+async function parseHtml(html, comicURL) {
     const comicMap = new Map();
-    const imageCheck = $('p > a > img', html);
+    const searchIntro = $('.searchIntro', html);
 
-    if (!imageCheck || !imageCheck[0]) {
+    if (!searchIntro || !searchIntro[0]) {
         return comicMap;
     }
 
-    for (let i = 0; i < 30; i++) {
-        comicImages.push($('p > a > img', html)[i].attribs.src);
+    const searchIntroText = searchIntro.text().replace("Results ", "").replace(" - ", "|").replace(" of ", "|").replace(",", "");
+    const parts = searchIntroText.split("|");
+    let from = parseInt(parts[0]);
+    let to = parseInt(parts[1]);
+    const results = parseInt(parts[2]);
+    const pages = results/30;
+
+    for (let i=2; i<=pages; i++) {
+        const images = getImages(html,to - from + 1, comicMap)
+        html = await rp(`${comicURL}&page=${i}`)
+        comicMap.add()
     }
-
-    comicImages.forEach((link) => {
-        let name = link.substring(7, link.lastIndexOf("/"));
-        let issue = link.substring(link.lastIndexOf("/") + 1, link.length - 6);
-        let image = link;
-
-        if (!comicMap.has(issue)) {
-            comicMap.add(issue, `http://www.coverbrowser.com${image}`);
-        }
-    });
+    console.log(intOfResults)
 
     return comicMap;
+}
+
+// Soek loop wat issue + image
+function getImages(html, imagePerPage, map) {
+     for (let i=0; i<imagePerPage; i++) {
+         map.add()
+     }
 }
